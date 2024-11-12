@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -16,6 +16,11 @@ os.environ["GOOGLE_API_KEY"] = "AIzaSyC14gcwPiQaxHlnTahD3QI9v_wYmfaDH44"
 
 # Initialize Google Gemini client using Langchain's ChatGoogleGenerativeAI
 llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.1)
+
+# Route to render the HTML page
+@app.route("/")
+def index():
+    return render_template("index.html")  # This will render the HTML file from the templates folder
 
 # Route to handle chat requests
 @app.route("/chat", methods=["POST"])
