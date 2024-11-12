@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Google Gemini</title>
+</head>
+<body>
+    <h1>Chat with Google Gemini</h1>
+
+    <form id="chat-form">
+        <label for="user-input">Your message:</label><br>
+        <input type="text" id="user-input" name="user-input" required><br><br>
+        <input type="submit" value="Send">
+    </form>
+
+    <h3>Bot Response:</h3>
+    <p id="bot-response"></p>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const chatForm = document.getElementById('chat-form');
+            const userInputElement = document.getElementById('user-input');
+            const botResponseElement = document.getElementById('bot-response');
+
+            chatForm.addEventListener('submit', function(event) {
+                event.preventDefault();  // Prevent default form submission
+
+                const userInput = userInputElement.value;  // Get user input
+
+                // Prepare the request payload
+                const requestPayload = {
+                    question: userInput
+                };
+
+                // Send a POST request to the Flask backend using Fetch API
+                fetch('http://127.0.0.1:5000/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestPayload)  // Send question as JSON
+                })
+                .then(response => response.json())  // Parse JSON response
+                .then(data => {
+                    // Display the bot's response
+                    botResponseElement.textContent = data.response;
+                })
+                .catch(error => {
+                    // Handle errors
+                    botResponseElement.textContent = 'Error: ' + error.message;
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
