@@ -4,37 +4,138 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat with Google Gemini</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        /* Styling for the loading dots */
+        .loading-dots {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 0.2em;
+            visibility: hidden;
+        }
+        .loading-dots.active {
+            visibility: visible;
+        }
+        .loading-dots span {
+            animation: blink 1.5s infinite step-start;
+        }
+        .loading-dots span:nth-child(1) {
+            animation-delay: 0s;
+        }
+        .loading-dots span:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+        .loading-dots span:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        /* Custom styles */
+        .chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .chat-box {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+        }
+        .bot-message {
+            background-color: #d1e7dd;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        .user-message {
+            background-color: #f8d7da;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: right;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+        #bot-response {
+            padding-top: 10px;
+        }
+    </style>
 </head>
-<body>
-    <h1>Chat with Google Gemini</h1>
+<body class="bg-light">
 
-    <form id="chat-form">
-        <label for="user-input">Your message:</label><br>
-        <input type="text" id="user-input" name="user-input" required><br><br>
-        <input type="submit" value="Send">
-    </form>
+    <!-- Chat container -->
+    <div class="chat-container">
+        <h1 class="text-center mb-4">Chat with Google Gemini</h1>
 
-    <h3>Bot Response:</h3>
-    <p id="bot-response"></p>
+        <div class="chat-box mb-4" id="chat-box">
+            <!-- Messages will be appended here -->
+        </div>
+
+        <!-- User input form -->
+        <div class="input-container">
+            <input type="text" id="user-input" class="form-control" placeholder="Type your message..." required>
+            <button type="submit" class="btn btn-primary" id="send-btn">Send</button>
+        </div>
+
+        <!-- Loading dots -->
+        <div class="loading-dots" id="loading-dots">
+            <span>.</span><span>.</span><span>.</span>
+        </div>
+
+        <!-- Bot response -->
+        <p id="bot-response"></p>
+    </div>
+
+    <!-- Bootstrap JS and Popper.js (for Bootstrap components like tooltips, modals) -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const chatForm = document.getElementById('chat-form');
+            const chatBox = document.getElementById('chat-box');
             const userInputElement = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-btn');
+            const loadingDotsElement = document.getElementById('loading-dots');
             const botResponseElement = document.getElementById('bot-response');
 
-            chatForm.addEventListener('submit', function(event) {
-                event.preventDefault();  // Prevent default form submission
+            sendButton.addEventListener('click', function(event) {
+                event.preventDefault();  // Prevent default button behavior
 
                 const userInput = userInputElement.value;  // Get user input
+
+                // Append user's message to chat box
+                chatBox.innerHTML += `<div class="chat-message user-message">${userInput}</div>`;
+
+                // Clear the input field
+                userInputElement.value = '';
+
+                // Show loading indicator
+                loadingDotsElement.classList.add('active');
+                botResponseElement.textContent = '';  // Clear previous response
+
+                // Scroll chat box to the bottom
+                chatBox.scrollTop = chatBox.scrollHeight;
 
                 // Prepare the request payload
                 const requestPayload = {
                     question: userInput
                 };
 
-                // Send a POST request to the Flask backend using Fetch API
-                fetch('https://igc-24kk.vercel.app/chat', {
+                // Send a POST request to the backend using Fetch API
+                fetch('/chat', {  // Use relative URL since frontend and backend are served together
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -43,16 +144,21 @@
                 })
                 .then(response => response.json())  // Parse JSON response
                 .then(data => {
-                    // Display the bot's response
-                    botResponseElement.textContent = data.response;
+                    // Append bot's response to chat box
+                    chatBox.innerHTML += `<div class="chat-message bot-message">${data.response}</div>`;
                 })
                 .catch(error => {
                     // Handle errors
-                    botResponseElement.textContent = 'Error: ' + error.message;
+                    chatBox.innerHTML += `<div class="chat-message bot-message">Error: ${error.message}</div>`;
+                })
+                .finally(() => {
+                    // Hide loading indicator when response is received
+                    loadingDotsElement.classList.remove('active');
+                    // Scroll chat box to the bottom
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 });
             });
         });
     </script>
-
 </body>
 </html>
