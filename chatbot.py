@@ -12,10 +12,17 @@ app = Flask(__name__)
 CORS(app)
 
 # Set your Google API Key (ensure it's set up properly in your environment)
-os.environ["GOOGLE_API_KEY"] = "AIzaSyC14gcwPiQaxHlnTahD3QI9v_wYmfaDH44"
+os.environ["GOOGLE_API_KEY"] = "AIzaSyBdSjDXgh6i3ojwEskmigar4412yD-PjgM"
 
 # Initialize Google Gemini client using Langchain's ChatGoogleGenerativeAI
-llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.1)
+llm = ChatGoogleGenerativeAI(model="gemini-1.5-pro", temperature=0.8)
+
+# Define the prompt template for movie recommendation (no memory)
+demo_template = '''You should act as a simple chatbot to answer all the questions which is asked.
+Human Input: {human_input}'''
+
+# Create the prompt using the template
+prompt = PromptTemplate(input_variables=['human_input'], template=demo_template)
 
 # Route to render the HTML page
 @app.route("/")
@@ -33,15 +40,12 @@ def chat():
 
     user_input = data["question"]
 
-    # Set up the prompt template
-    prompt_template = PromptTemplate(input_variables=["question"], template="{question}")
-
-    # Create the LLM chain
-    chain = LLMChain(llm=llm, prompt=prompt_template)
+    # Create the LLM chain without memory
+    chain = LLMChain(llm=llm, prompt=prompt, verbose=True)
 
     try:
-        # Get the response from the chain
-        response = chain.run({"question": user_input})
+        # Get the response from the chain, passing in the human input
+        response = chain.predict(human_input=user_input)
 
         # Return the response as JSON
         return jsonify({"response": response})
