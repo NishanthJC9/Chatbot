@@ -3,13 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with Google Gemini</title>
+    <title>TIBCO Chatbot</title>
 
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
 
     <style>
-        /* Styling for the loading dots */
+        /* Fullscreen chat layout */
+        body, html {
+            height: 100%;
+            margin: 0;
+            background: linear-gradient(135deg, #00c6ff, #0072ff); /* Gradient background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column; /* Stack header and chat container */
+        }
+
+        .chat-container {
+            width: 800px;
+            max-width: 800px; /* Increased width to resemble ChatGPT's chat size */
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            height: 80%; /* Use 80% of the screen height */
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .chat-header {
+            background-color: #0072ff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .chat-box {
+            flex: 1;
+            padding: 20px;
+            background-color: #f4f7fa;
+            overflow-y: auto;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+
+        .bot-message {
+            background-color: #d1f7c4;
+            align-self: flex-start;
+        }
+
+        .user-message {
+            background-color: #f8d7da;
+            align-self: flex-end;
+            text-align: right;
+            border-radius: 8px;
+            padding: 10px;
+            display: inline-block;
+            max-width: 75%;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        .input-container {
+            display: flex;
+            padding: 15px;
+            background-color: #fff;
+            border-top: 1px solid #ddd;
+            gap: 10px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border-radius: 25px;
+            border: 1px solid #ddd;
+        }
+
+        #send-btn {
+            padding: 10px 20px;
+            border-radius: 25px;
+            background-color: #0072ff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #send-btn:hover {
+            background-color: #005bb5;
+        }
+
+        /* Loading dots */
         .loading-dots {
             font-size: 24px;
             font-weight: bold;
@@ -37,69 +132,34 @@
                 opacity: 0;
             }
         }
-
-        /* Custom styles */
-        .chat-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .chat-box {
-            background-color: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            height: 300px;
-            overflow-y: auto;
-        }
-        .chat-message {
-            margin-bottom: 10px;
-        }
-        .bot-message {
-            background-color: #d1e7dd;
-            padding: 10px;
-            border-radius: 8px;
-        }
-        .user-message {
-            background-color: #f8d7da;
-            padding: 10px;
-            border-radius: 8px;
-            text-align: right;
-        }
-        .input-container {
-            display: flex;
-            gap: 10px;
-        }
-        #bot-response {
-            padding-top: 10px;
-        }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
     <!-- Chat container -->
     <div class="chat-container">
-        <h1 class="text-center mb-4">Chat with Google Gemini</h1>
+        <!-- Header for Chatbot -->
+        <div class="chat-header">
+            TIBCO Chatbot
+        </div>
 
-        <div class="chat-box mb-4" id="chat-box">
+        <div class="chat-box" id="chat-box">
             <!-- Messages will be appended here -->
         </div>
 
         <!-- User input form -->
         <div class="input-container">
             <input type="text" id="user-input" class="form-control" placeholder="Type your message..." required>
-            <button type="submit" class="btn btn-primary" id="send-btn">Send</button>
+            <button type="submit" class="btn" id="send-btn">Send</button>
         </div>
 
         <!-- Loading dots -->
         <div class="loading-dots" id="loading-dots">
             <span>.</span><span>.</span><span>.</span>
         </div>
-
-        <!-- Bot response -->
-        <p id="bot-response"></p>
     </div>
 
-    <!-- Bootstrap JS and Popper.js (for Bootstrap components like tooltips, modals) -->
+    <!-- Bootstrap JS and Popper.js -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
 
@@ -109,52 +169,62 @@
             const userInputElement = document.getElementById('user-input');
             const sendButton = document.getElementById('send-btn');
             const loadingDotsElement = document.getElementById('loading-dots');
-            const botResponseElement = document.getElementById('bot-response');
+
+            // Function to simulate the typewriter effect
+            function typeWriter(text, element) {
+                let i = 0;
+                element.innerHTML = ''; // Clear previous content
+                const interval = setInterval(() => {
+                    element.innerHTML += text.charAt(i);
+                    i++;
+                    if (i === text.length) {
+                        clearInterval(interval);
+                    }
+                }, 10); // Adjust typing speed here (in ms)
+            }
 
             sendButton.addEventListener('click', function(event) {
                 event.preventDefault();  // Prevent default button behavior
 
-                const userInput = userInputElement.value;  // Get user input
+                const userInput = userInputElement.value;
 
-                // Append user's message to chat box
+                // Append user's message
                 chatBox.innerHTML += `<div class="chat-message user-message">${userInput}</div>`;
+                userInputElement.value = ''; // Clear input field
 
-                // Clear the input field
-                userInputElement.value = '';
-
-                // Show loading indicator
+                // Show loading dots
                 loadingDotsElement.classList.add('active');
-                botResponseElement.textContent = '';  // Clear previous response
 
-                // Scroll chat box to the bottom
+                // Scroll chat to the bottom
                 chatBox.scrollTop = chatBox.scrollHeight;
 
-                // Prepare the request payload
-                const requestPayload = {
-                    question: userInput
-                };
+                // Prepare request payload
+                const requestPayload = { question: userInput };
 
-                // Send a POST request to the backend using Fetch API
-                fetch('/chat', {  // Use relative URL since frontend and backend are served together
+                // Send POST request
+                fetch('/chat', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestPayload)  // Send question as JSON
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestPayload)
                 })
-                .then(response => response.json())  // Parse JSON response
+                .then(response => response.json())
                 .then(data => {
-                    // Append bot's response to chat box
-                    chatBox.innerHTML += `<div class="chat-message bot-message">${data.response}</div>`;
+                    // Create a bot message container
+                    const botMessageElement = document.createElement('div');
+                    botMessageElement.classList.add('chat-message', 'bot-message');
+                    chatBox.appendChild(botMessageElement);
+
+                    // Type the bot's response letter by letter
+                    typeWriter(data.response, botMessageElement);
                 })
                 .catch(error => {
-                    // Handle errors
-                    chatBox.innerHTML += `<div class="chat-message bot-message">Error: ${error.message}</div>`;
+                    const botMessageElement = document.createElement('div');
+                    botMessageElement.classList.add('chat-message', 'bot-message');
+                    botMessageElement.innerHTML = `Error: ${error.message}`;
+                    chatBox.appendChild(botMessageElement);
                 })
                 .finally(() => {
-                    // Hide loading indicator when response is received
                     loadingDotsElement.classList.remove('active');
-                    // Scroll chat box to the bottom
                     chatBox.scrollTop = chatBox.scrollHeight;
                 });
             });
